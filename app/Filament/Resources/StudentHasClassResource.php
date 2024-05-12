@@ -5,24 +5,21 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Periode;
-use App\Models\Teacher;
+use App\Models\Student;
 use App\Models\HomeRoom;
 use Filament\Forms\Form;
-use App\Models\Classroom;
 use Filament\Tables\Table;
+use App\Models\StudentHasClass;
 use Filament\Resources\Resource;
+use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\HomeRoomResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\HomeRoomResource\RelationManagers;
+use App\Filament\Resources\StudentHasClassResource\Pages;
+use App\Filament\Resources\StudentHasClassResource\RelationManagers;
 
-class HomeRoomResource extends Resource
+class StudentHasClassResource extends Resource
 {
-    protected static ?string $model = HomeRoom::class;
-    protected static ?string $navigationGroup = 'Schedule';
-    protected static ?int $navigationSort = 3;
-
-
+    protected static ?string $model = StudentHasClass::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -30,17 +27,18 @@ class HomeRoomResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('teacher_id')
-                    ->relationship('teacher', 'name', )
-                    ->required(),
-                Forms\Components\Select::make('classroom_id')
-                    ->relationship(name: 'classroom', titleAttribute: 'name')
-                    ->required(),
-                Forms\Components\Select::make('periode_id')
-                    ->relationship(name: 'periode', titleAttribute: 'name')
-                    ->required(),
-                Forms\Components\Toggle::make('is_open')
-                    ->required(),
+                Section::make()
+                ->schema([
+                    Forms\Components\Select::make('student_id')
+                        ->options(Student::all()->pluck('name', 'id'))
+                        ->required(),
+                    Forms\Components\Select::make('home_room_id')
+                        ->options(HomeRoom::all()->pluck('classroom.name', 'id'))
+                        ->required(),
+                    Forms\Components\Select::make('periode_id')
+                        ->options(Periode::all()->pluck('name', 'id'))
+                        ->required(),
+                ])->columns(3)
             ]);
     }
 
@@ -48,14 +46,11 @@ class HomeRoomResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('teacher.name')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('student.name')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('classroom.name')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('homeroom.classroom.name')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('periode.name')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('periode_id')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_open')
                     ->boolean(),
@@ -74,6 +69,7 @@ class HomeRoomResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -92,10 +88,10 @@ class HomeRoomResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListHomeRooms::route('/'),
-            // 'create' => Pages\CreateHomeRoom::route('/create'),
-            'view' => Pages\ViewHomeRoom::route('/{record}'),
-            'edit' => Pages\EditHomeRoom::route('/{record}/edit'),
+            'index' => Pages\ListStudentHasClasses::route('/'),
+            'create' => Pages\FormStudentClass::route('/create'),
+            'view' => Pages\ViewStudentHasClass::route('/{record}'),
+            'edit' => Pages\EditStudentHasClass::route('/{record}/edit'),
         ];
     }
 }

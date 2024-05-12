@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use App\Models\Classroom;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Actions\Action;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Resources\RelationManagers\RelationManager;
 
@@ -22,12 +23,37 @@ class ClassroomRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('classroom_id')
                     ->label('Classroom')
+                    ->preload()
                     ->options(Classroom::all()->pluck('name', 'id'))
+                    ->relationship(name: 'classroom', titleAttribute: 'name')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('slug')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->createOptionAction(
+                        fn (Action $action) => $action->modalWidth('3xl')
+                            ->modalHeading('Add Classroom'),
+                    )
                     ->searchable(),
                 Forms\Components\Select::make('periode_id')
                     ->options(Periode::all()->pluck('name', 'id'))
                     ->label('Periode')
-                    ->searchable(),
+                    ->preload()
+                    ->searchable()
+                    ->relationship(name: 'periode', titleAttribute: 'name')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->createOptionAction(
+                        fn (Action $action) => $action->modalWidth('3xl')
+                            ->modalHeading('Add Periode'),
+                    ),
             ]);
     }
 
