@@ -8,12 +8,17 @@ use Filament\Tables;
 use App\Models\Student;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists\Components\TextEntry;
+use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\StudentResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\StudentResource\RelationManagers;
@@ -89,6 +94,8 @@ class StudentResource extends Resource
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('profile')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->formatStateUsing(fn (string $state): string => ucwords(("{$state}"))),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -113,8 +120,26 @@ class StudentResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('Change Status')
+                        ->icon('heroicon-m-check')
+                        ->requiresConfirmation()
+                        ->form([
+                            Select::make('status')
+                                ->options([
+                                    'accept' => 'Accept',
+                                    'off' => 'Off',
+                                    'move' => 'Move',
+                                    'grade' => 'Grade'
+                                ])
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            return $records->each(function ($record) use($data) {
+                                $id = $record->id;
+                                Student::where('id', $id)->update(['status' => $data['status']]);
+                            });
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                ])
             ]);
     }
 
